@@ -10,6 +10,7 @@ urlpatterns = [
     path('api/category/', views.category),
     path('api/comment/', views.comment),
     path('api/register/', views.register),
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/', views.CustomTokenObtainPairView, name='token_obtain_pair'),
+    path('api/logout/', views.logout, name='logout'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh')
 ]

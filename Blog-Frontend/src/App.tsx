@@ -1,12 +1,9 @@
-import { AuthProvider } from './auth/AuthContext';
-import AuthTestComponent from './components/Auth';
+import Register from "./components/Registerform"
 function App() {
 
   return (
     <>
-    <AuthProvider>
-      <AuthTestComponent />
-    </AuthProvider>
+    <Register />
     </>
   )
 }
