@@ -1,9 +1,9 @@
-import Register from "./components/Registerform"
+import Login from "./components/Login"
 function App() {
 
   return (
     <>
-    <Register />
+    <Login />
     </>
   )
 }

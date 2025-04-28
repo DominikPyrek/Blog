@@ -6,6 +6,9 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import datetime,timedelta
+from django.conf import settings
 
 @api_view(['GET', 'POST'])
 def posts(request):
@@ -65,37 +68,40 @@ def CustomTokenObtainPairView(request):
     user = authenticate(username=username, password=password)
     if not user:
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
-    
+
     refresh = RefreshToken.for_user(user)
-    
+    access_token = str(refresh.access_token)
+    refresh_token = str(refresh)
+
+    access_expiry = datetime.now() + timedelta(minutes=15)
+    refresh_expiry = datetime.now() + timedelta(days=7)
+
     response = Response({
         'user': {
             'id': user.id,
             'username': user.username,
-            'email': user.email
-        }
+        },
     }, status=status.HTTP_200_OK)
-    
+
     response.set_cookie(
-        key=settings.SIMPLE_JWT['AUTH_COOKIE'],
-        value=str(refresh.access_token),
-        expires=datetime.now() + settings.SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'],
-        httponly=settings.SIMPLE_JWT['AUTH_COOKIE_HTTP_ONLY'],
-        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
-        path=settings.SIMPLE_JWT['AUTH_COOKIE_PATH']
+        key='access_token',
+        value=access_token,
+        httponly=True,
+        samesite='Strict',
+        secure=True,
+        expires=access_expiry,
+        path='/api/token/',
     )
     
     response.set_cookie(
         key='refresh_token',
-        value=str(refresh),
-        expires=datetime.now() + settings.SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'],
+        value=refresh_token,
         httponly=True,
-        secure=settings.SIMPLE_JWT['AUTH_COOKIE_SECURE'],
-        samesite=settings.SIMPLE_JWT['AUTH_COOKIE_SAMESITE'],
-        path='/api/token/refresh/'
+        samesite='Strict',
+        secure=True,
+        expires=refresh_expiry,
+        path='/api/token/refresh/',
     )
-    
     return response
 
 @api_view(['POST', 'GET'])
