@@ -1,12 +1,27 @@
 import { TextField, Button } from '@mui/material';
 import { useForm, SubmitHandler } from "react-hook-form"
-import axios from "axios";
+import api from '../axios/axiosInstance';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import { useNavigate } from 'react-router';
+import { ToastContainer, toast } from 'react-toastify';
 
 type Inputs = {
-  login: string
+  username: string
   password: string
+}
+
+type ApiError = {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+  message?: string;
+};
+
+function sleep(time: number) {
+  return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 const Register = () => {
@@ -15,20 +30,21 @@ const {
   handleSubmit,
   formState: { errors },
 } = useForm<Inputs>()
+let navigate = useNavigate();
+
 const onSubmit: SubmitHandler<Inputs> = (data) => {
-  axios.post('http://127.0.0.1:8000/api/register/', {
-      username: data.login,
+  api.post('/api/register/', {
+      username: data.username,
       password: data.password
-    }, {
-      headers: {
-          'Content-Type': 'application/json',
-      }
+    }
+    )
+    .then(async function () {
+      toast.success('🦄 You have been reggistered succesfully you will be now redirected to login page')
+      await sleep(5000);
+      return  navigate("/login")
     })
-    .then(function (response) {
-      console.log(response);
-    })
-    .catch(function (error) {
-      console.log(error);
+    .catch(function (error : ApiError) {
+      toast.error(error.response?.data?.detail || "Login failed")
     });
 }
 
@@ -46,17 +62,17 @@ const onSubmit: SubmitHandler<Inputs> = (data) => {
     <form onSubmit={handleSubmit(onSubmit)}>
     <TextField
           fullWidth
-          label="Email"
+          label="(Ex: 'MyName'"
           margin="normal"
-          {...register('login', { 
-            required: 'Login is required',
+          {...register('username', { 
+            required: 'username is required',
           })}
-          error={!!errors.login}
-          helperText={errors.login?.message}
+          error={!!errors.username}
+          helperText={errors.username?.message}
     />
         <TextField
           fullWidth
-          label="Password"
+          label="Ex: 'apple1' – 6 characters minimum"
           type="password"
           margin="normal"
           {...register('password', { 
@@ -78,6 +94,18 @@ const onSubmit: SubmitHandler<Inputs> = (data) => {
           Sign In
         </Button>
     </form>
+    <ToastContainer
+      position="bottom-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick={false}
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="light"
+  />
     </Box>
   )
 

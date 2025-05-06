@@ -1,23 +1,44 @@
 import { TextField, Button } from '@mui/material';
 import { useForm, SubmitHandler } from "react-hook-form"
-import axios from "axios";
+import api from '../axios/axiosInstance';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
+import { useNavigate } from "react-router";
+import { useCookies } from 'react-cookie';
+import { ToastContainer, toast } from 'react-toastify';
 
 type Inputs = {
-  login: string
+  username: string
   password: string
 }
 
+type ApiError = {
+  response?: {
+    data?: {
+      detail?: string;
+    };
+  };
+  message?: string;
+};
+
 const Login = () => {
+  
 const {
   register,
   handleSubmit,
   formState: { errors },
 } = useForm<Inputs>()
+
+let navigate = useNavigate();
+const [_, setCookie] = useCookies(['auth']);
+
+function sleep(time: number) {
+  return new Promise((resolve) => setTimeout(resolve, time));
+}
+
 const onSubmit: SubmitHandler<Inputs> = (data) => {
-  axios.post('http://127.0.0.1:8000/api/token/', {
-      username: data.login,
+  api.post('/api/token/', {
+      username: data.username,
       password: data.password,
     }, {
       headers: {
@@ -25,11 +46,17 @@ const onSubmit: SubmitHandler<Inputs> = (data) => {
       },
       withCredentials: true
     })
-    .then(function (response) {
-      console.log(response);
+    .then(async function () {
+      setCookie('auth', true, {
+        path: '/',
+        maxAge: 900,
+      });
+      toast.success('🦄 You have been logeed in succesfully you will be now redirected to home page')
+      await sleep(5000);
+      return  navigate("/")
     })
-    .catch(function (error) {
-      console.log(error);
+    .catch(function (error: ApiError) {
+      toast.error(error.response?.data?.detail || "Login failed")
     });
 }
 
@@ -47,13 +74,13 @@ const onSubmit: SubmitHandler<Inputs> = (data) => {
     <form onSubmit={handleSubmit(onSubmit)}>
     <TextField
           fullWidth
-          label="Email"
+          label="Username"
           margin="normal"
-          {...register('login', { 
-            required: 'Login is required',
+          {...register('username', { 
+            required: 'Username is required',
           })}
-          error={!!errors.login}
-          helperText={errors.login?.message}
+          error={!!errors.username}
+          helperText={errors.username?.message}
     />
         <TextField
           fullWidth
@@ -79,6 +106,18 @@ const onSubmit: SubmitHandler<Inputs> = (data) => {
           Sign In
         </Button>
     </form>
+    <ToastContainer
+      position="bottom-right"
+      autoClose={5000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick={false}
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+      theme="light"
+  />
     </Box>
   )
 
